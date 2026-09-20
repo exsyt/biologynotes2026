@@ -6,7 +6,57 @@ import { TopicView } from './components/TopicView';
 import { RevisionToolsModal } from './components/RevisionToolsModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
-export default function App() {
+// ===== PASSWORD GATE =====
+const CORRECT_PASSWORD = "biopass@28#"; // <-- change this to your password
+
+function PasswordGate({ children }: { children: React.ReactNode }) {
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    return localStorage.getItem('bio5090_unlocked') === 'true';
+  });
+  const [input, setInput] = useState('');
+  const [error, setError] = useState(false);
+
+  if (unlocked) {
+    return <>{children}</>;
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input === CORRECT_PASSWORD) {
+      localStorage.setItem('bio5090_unlocked', 'true');
+      setUnlocked(true);
+      setError(false);
+    } else {
+      setError(true);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center gap-4 px-4">
+      <h1 className="text-2xl font-bold">Enter Password</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full max-w-xs">
+        <input
+          type="password"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Password"
+          autoFocus
+          className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition"
+        >
+          Unlock
+        </button>
+        {error && <p className="text-red-400 text-sm text-center">Wrong password, try again.</p>}
+      </form>
+    </div>
+  );
+}
+// ===== END PASSWORD GATE =====
+
+function MainApp() {
   const [selectedTopicId, setSelectedTopicId] = useState<number>(() => {
     const saved = localStorage.getItem('bio5090_selected_topic');
     return saved ? Number(saved) : 1;
@@ -125,5 +175,13 @@ export default function App() {
       {/* Connectivity status alert */}
       <OfflineIndicator />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <PasswordGate>
+      <MainApp />
+    </PasswordGate>
   );
 }
